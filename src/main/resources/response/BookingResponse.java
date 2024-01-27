@@ -1,0 +1,38 @@
+package response;
+
+
+public class BookingResponse {
+
+    private Long userId;
+    private  long seatNo;
+
+    private Long flightId;
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public long getSeatNo() {
+        return seatNo;
+    }
+
+    public void setSeatNo(long seatNo) {
+        this.seatNo = seatNo;
+    }
+
+    public Long getFlightId() {
+        return flightId;
+    }
+
+    public void setFlightId(Long flightId) {
+        this.flightId = flightId;
+    }
+
+
+
+
+}
