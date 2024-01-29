@@ -1,6 +1,7 @@
 package com.github.imanish05.dto;
 
 import jakarta.persistence.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -14,13 +15,16 @@ public class Flight {
     private Long id;
     private String source;
     private String destination;
-    private LocalDateTime dateTime;
+    @DateTimeFormat(iso=DateTimeFormat.ISO.DATE)
+    private LocalDateTime date;
     private String oneWay;
 
     private long capacity;
 
-    private long seatAvailable;
+    private long seatBooked;
 
+    private double price;
+    @DateTimeFormat(iso=DateTimeFormat.ISO.TIME)
     private LocalDateTime scheduleTime;
 
     private String name;
@@ -32,12 +36,12 @@ public class Flight {
         this.capacity = capacity;
     }
 
-    public long getSeatAvailable() {
-        return seatAvailable;
+    public long getSeatBooked() {
+        return seatBooked;
     }
 
-    public void setSeatAvailable(long seatAvailable) {
-        this.seatAvailable = seatAvailable;
+    public void setSeatBooked(long seatBooked) {
+        this.seatBooked = seatBooked;
     }
 
     public long getDuration() {
@@ -58,8 +62,8 @@ public class Flight {
         this.destination = destination;
     }
 
-    public void setDateTime(LocalDateTime dateTime) {
-        this.dateTime = dateTime;
+    public void setDate(LocalDateTime date) {
+        this.date = date;
     }
 
     public void setOneWay(String oneWay) {
@@ -74,8 +78,8 @@ public class Flight {
         return destination;
     }
 
-    public LocalDateTime getDateTime() {
-        return dateTime;
+    public LocalDateTime getDate() {
+        return date;
     }
 
     public String getOneWay() {
@@ -108,19 +112,28 @@ public class Flight {
         this.scheduleTime = scheduleTime;
     }
 
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
     @Override
     public String toString() {
         return "Flight{" +
                 "id=" + id +
                 ", source='" + source + '\'' +
                 ", destination='" + destination + '\'' +
-                ", dateTime=" + dateTime +
+                ", date=" + date +
                 ", oneWay='" + oneWay + '\'' +
                 ", capacity=" + capacity +
-                ", seatAvailable=" + seatAvailable +
+                ", seatBooked=" + seatBooked +
                 ", scheduleTime=" + scheduleTime +
                 ", name='" + name + '\'' +
                 ", duration=" + duration +
+                ", price="+price+
                 '}';
     }
 }

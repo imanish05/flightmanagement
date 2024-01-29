@@ -20,6 +20,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @EnableTransactionManagement
@@ -33,51 +37,59 @@ public class BookingService {
     @Autowired
     private FlightScheduleRepository flightScheduleRepository;
 
-    public List<Flight> findFlightsBySource(String source){
+    public List<Flight> findFlightsBySource(String source) {
 
-        return flightScheduleRepository.findBySource( source);
+        return flightScheduleRepository.findBySource(source);
     }
 
 
     public List<Flight> findFlightsBySourceAndDestination(String source, String destination) {
-        return flightScheduleRepository.findBySourceAndDestination(source,destination);
+        return flightScheduleRepository.findBySourceAndDestination(source, destination);
     }
 
     @Transactional
     public BookingDetails allocateTicket(BookingRequest bookingRequest) {
 
-        User userDetails = null;
-        Flight flightDetails = null;
-
         //Validation for user details
         // Validation for flight details
         //ticket Availability
-        Optional<User> user = registrationRepository.findById(bookingRequest.getUserId());
-        if (user.isPresent()) {
-            userDetails = user.get();
-        } else
-             throw new UserNotFoundException("User does not Exist with id :"+bookingRequest.getUserId());
-        Optional<Flight> flight = flightScheduleRepository.findById(bookingRequest.getFlightId());
+        User userDetails = registrationRepository.findById(bookingRequest.getUserId()).orElseThrow(() -> new UserNotFoundException("User does not Exist with id :" + bookingRequest.getUserId()));
+        // Just to check for seat available in the flight selected by user on time mentioned
+        Flight flightDetails = flightScheduleRepository.findById(bookingRequest.getFlightId()).orElseThrow(() -> new FlightReservationException("Flight does not Exist with id :" + bookingRequest.getUserId()));
 
-        if (flight.isPresent()){
-           flightDetails=  flight.get();
-            //Make it Transational and Synchronised
-           Long seatNo = flightDetails.getCapacity() - flightDetails.getSeatAvailable();
-            if (seatNo >= 0 && flightDetails.getCapacity()>0 && flightDetails.getSeatAvailable()>0) {
-                seatNo++;
-                BookingDetails cutomerRequest = new BookingDetails();
-                cutomerRequest.setUser(userDetails);
-                cutomerRequest.setFlight(flightDetails);
-                cutomerRequest.setSeatNo(flightDetails.getName()+seatNo);
+        //ToDO
+        //Implement Optimistic locking for time duration for seat reservation or Queue Based Locking
+        //Seat shared in the request to be booked
+        long seatBooked = flightDetails.getSeatBooked();
+        int noOfSeatsReq = bookingRequest.getSeatNoList().size();
+        Long seatAvailable = flightDetails.getCapacity() - seatBooked;
+        if (seatAvailable > 0 && flightDetails.getCapacity() > 0 && noOfSeatsReq <= seatAvailable) {
+            long seatsSelected = seatBooked + noOfSeatsReq;
+            BookingDetails cutomerRequest = new BookingDetails();
+            cutomerRequest.setUser(userDetails);
+            cutomerRequest.setFlight(flightDetails);
 
-                int updateStatus = flightScheduleRepository.updateSeatAvailableById(flightDetails.getSeatAvailable() - 1, flightDetails.getId());
-                return reserveRepository.save( cutomerRequest);
-            }else
-                throw new NoSeatAvailableException("No More seats available. U can try other flights");
-        }else {
-            throw new FlightReservationException("Flight does not Exist with id :"+bookingRequest.getUserId());
-        }
+            StringJoiner sn = new StringJoiner(",");
+            for (Long seatNo = (seatBooked + 1); seatNo <= (seatBooked + noOfSeatsReq); seatNo++) {
+                sn.add(flightDetails.getName() + seatNo);
+            }
+            cutomerRequest.setSeatNumbers(sn.toString());
+
+            Lock l = new ReentrantLock();
+            l.lock();
+            try {
+                //check for payment status -- if failed throw payment Failure exception
+                cutomerRequest.setTotalTicketPrice(noOfSeatsReq*flightDetails.getPrice());
+                int updateStatus = flightScheduleRepository.updateSeatAvailableById(seatsSelected, flightDetails.getId());
+                return reserveRepository.save(cutomerRequest);
+
+            } finally {
+                l.unlock();
+            }
+
+        } else throw new NoSeatAvailableException("No More seats available. U can try other flights");
     }
+
 
     public List<BookingDetails> findAll() {
 
@@ -85,10 +97,6 @@ public class BookingService {
     }
 
     public BookingDetails findById(Long id) {
-        Optional<BookingDetails> byId = reserveRepository.findById(id);
-        if(byId.isPresent())
-            return byId.get();
-        else
-            throw  new BookingNotFoundException("No Booking Exist with Id: "+id);
+        return reserveRepository.findById(id).orElseThrow(() -> new BookingNotFoundException("No Booking Exist with Id: " + id));
     }
 }

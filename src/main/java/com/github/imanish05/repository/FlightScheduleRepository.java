@@ -18,6 +18,6 @@ public interface FlightScheduleRepository extends JpaRepository<Flight,Long> {
     List<Flight> findBySourceAndDestination(String source, String destination);
 
     @Modifying
-    @Query("update Flight f set f.seatAvailable = :seatAvailable where f.id =:id")
-     int  updateSeatAvailableById(@Param(value = "seatAvailable") long seatAvailable, @Param(value = "id") long id);
+    @Query("update Flight f set f.seatBooked = :seatBooked where f.id =:id")
+     int  updateSeatAvailableById(@Param(value = "seatBooked") long seatBooked, @Param(value = "id") long id);
 }

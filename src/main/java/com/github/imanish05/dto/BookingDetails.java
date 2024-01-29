@@ -15,7 +15,16 @@ public class BookingDetails {
     @ManyToOne
     @JoinColumn(name = "flight_id")
     private Flight flight;
-    private String seatNo;
+    private String seatNumbers;
+    private double totalTicketPrice;
+
+    public double getTotalTicketPrice() {
+        return totalTicketPrice;
+    }
+
+    public void setTotalTicketPrice(double totalTicketPrice) {
+        this.totalTicketPrice = totalTicketPrice;
+    }
 
     public Long getId() {
         return id;
@@ -41,12 +50,12 @@ public class BookingDetails {
         this.flight = flight;
     }
 
-    public String getSeatNo() {
-        return seatNo;
+    public String getSeatNumbers() {
+        return seatNumbers;
     }
 
-    public void setSeatNo(String seatNo) {
-        this.seatNo = seatNo;
+    public void setSeatNumbers(String seatNumbers) {
+        this.seatNumbers = seatNumbers;
     }
 
     @Override
@@ -55,7 +64,7 @@ public class BookingDetails {
                 "id=" + id +
                 ", user=" + user.toString() +
                 ", flight=" + flight.toString() +
-                ", seatNo='" + seatNo + '\'' +
+                ", seatNumbers='" + seatNumbers + '\'' +
                 '}';
     }
 }
